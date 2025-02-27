@@ -1,19 +1,49 @@
 steps:
-  # Initialize Terraform
+  # Debug step to show working directory
+  - name: 'gcr.io/cloud-builders/gcloud'
+    id: 'debug-info'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "Current directory: $(pwd)"
+        echo "Directory contents:"
+        ls -la
+        echo "Google Cloud credentials:"
+        gcloud auth list
+
+  # Initialize Terraform with more verbose logging
   - name: 'hashicorp/terraform:latest'
-    args: ['init']
+    id: 'tf-init'
+    args: ['init', '-input=false', '-no-color']
     
   # Validate Terraform files
   - name: 'hashicorp/terraform:latest'
+    id: 'tf-validate'
     args: ['validate']
     
-  # Plan Terraform changes
+  # Plan Terraform changes with detailed error output
   - name: 'hashicorp/terraform:latest'
-    args: ['plan', '-out=tfplan']
+    id: 'tf-plan'
+    entrypoint: 'sh'
+    args:
+      - '-c'
+      - |
+        set -e
+        echo "Running Terraform plan..."
+        terraform plan -input=false -no-color -out=tfplan || {
+          echo "Terraform plan failed with exit code $?"
+          echo "Terraform version:"
+          terraform version
+          echo "Provider information:"
+          terraform providers
+          exit 1
+        }
     
-  # Apply Terraform changes (with approval trigger or separate step)
+  # Apply Terraform changes
   - name: 'hashicorp/terraform:latest'
-    args: ['apply', 'tfplan']
+    id: 'tf-apply'
+    args: ['apply', '-input=false', '-no-color', 'tfplan']
 
 options:
   logging: CLOUD_LOGGING_ONLY
