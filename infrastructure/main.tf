@@ -101,17 +101,6 @@ resource "google_cloud_run_service" "portainer" {
           value = "/secrets/sa-key/key.json"
         }
         
-        # Set Portainer admin password from Secret Manager
-        env {
-          name  = "PORTAINER_ADMIN_PASSWORD"
-          value_from {
-            secret_key_ref {
-              name = google_secret_manager_secret.portainer_admin_password.secret_id
-              key  = "latest"
-            }
-          }
-        }
-        
         volume_mounts {
           name = "sa-key-volume"
           mount_path = "/secrets/sa-key"
@@ -145,13 +134,6 @@ resource "google_cloud_run_service_iam_member" "public_access" {
 output "portainer_url" {
   value = google_cloud_run_service.portainer.status[0].url
 }
-
-# Output the generated admin password (only for initial setup - store securely!)
-output "portainer_admin_password" {
-  value     = random_password.portainer_password.result
-  sensitive = true
-}
-
 
 /* # Create Service Account which is used to deploy resources.
 # The way it does this is by using the credentials of the service account to authenticate with GCP.
