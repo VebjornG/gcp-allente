@@ -21,3 +21,6 @@ steps:
 substitutions:
   _REGION: europe-west1
   _VERSION: latest  # You can override this with a git tag or commit SHA
+
+options:
+  logging: CLOUD_LOGGING_ONLY

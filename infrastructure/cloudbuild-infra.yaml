@@ -14,3 +14,6 @@ steps:
   # Apply Terraform changes (with approval trigger or separate step)
   - name: 'hashicorp/terraform:latest'
     args: ['apply', 'tfplan']
+
+options:
+  logging: CLOUD_LOGGING_ONLY
