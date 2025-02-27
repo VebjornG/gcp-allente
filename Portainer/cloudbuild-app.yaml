@@ -1,4 +1,4 @@
-steps:
+#steps:
   # Build the Portainer Docker image
   #- name: 'gcr.io/cloud-builders/docker'
   #  args: ['build', '-t', '${_REGION}-docker.pkg.dev/${PROJECT_ID}/arvebgilpctest/portainer:${_VERSION}', '.']
