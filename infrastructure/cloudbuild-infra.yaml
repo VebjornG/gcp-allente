@@ -2,6 +2,7 @@ steps:
   # Debug step to show working directory
   - name: 'gcr.io/cloud-builders/gcloud'
     id: 'debug-info'
+    dir: '.'
     entrypoint: 'bash'
     args:
       - '-c'
@@ -9,47 +10,32 @@ steps:
         echo "Current directory: $(pwd)"
         echo "Directory contents:"
         ls -la
-        echo "Google Cloud credentials:"
-        gcloud auth list
+        echo "Infrastructure directory contents:"
+        ls -la infrastructure/
 
-  # Initialize Terraform with more verbose logging
+  # Initialize Terraform
   - name: 'hashicorp/terraform:latest'
     id: 'tf-init'
-    entrypoint: 'bash'
-    args:
-      - '-c'
-      - |
-        terraform init -input=false
+    dir: 'infrastructure'
+    args: ['init', '-input=false']
     
   # Validate Terraform files
   - name: 'hashicorp/terraform:latest'
     id: 'tf-validate'
-    entrypoint: 'bash'
-    args:
-      - '-c'
-      - |
-        cd infrastructure
-        terraform validate
-    
-  # Plan Terraform changes with detailed error output
-  - name: 'hashicorp/terraform:latest'
     dir: 'infrastructure'
+    args: ['validate']
+    
+  # Plan Terraform changes
+  - name: 'hashicorp/terraform:latest'
     id: 'tf-plan'
-    entrypoint: 'bash'
-    args:
-      - '-c'
-      - |
-        cd infrastructure
-        echo "Running Terraform plan..."
-        terraform plan -input=false -out=tfplan
+    dir: 'infrastructure'
+    args: ['plan', '-input=false', '-out=tfplan']
     
   # Apply Terraform changes
   - name: 'hashicorp/terraform:latest'
     id: 'tf-apply'
-    args:
-      - '-c'
-      - |
-        terraform apply -input=false tfplan
+    dir: 'infrastructure'
+    args: ['apply', '-input=false', 'tfplan']
 
 options:
   logging: CLOUD_LOGGING_ONLY
