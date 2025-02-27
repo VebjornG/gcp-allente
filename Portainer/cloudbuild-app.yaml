@@ -1,26 +1,59 @@
 steps:
   # Build the Portainer Docker image
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', '${_REGION}-docker.pkg.dev/${PROJECT_ID}/arvebgilpctest/portainer:${_VERSION}', '.']
+  #- name: 'gcr.io/cloud-builders/docker'
+  #  args: ['build', '-t', '${_REGION}-docker.pkg.dev/${PROJECT_ID}/arvebgilpctest/portainer:${_VERSION}', '.']
 
   # Push the Docker image to Artifact Registry
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', '${_REGION}-docker.pkg.dev/${PROJECT_ID}/arvebgilpctest/portainer:${_VERSION}']
+  #- name: 'gcr.io/cloud-builders/docker'
+  #  args: ['push', '${_REGION}-docker.pkg.dev/${PROJECT_ID}/arvebgilpctest/portainer:${_VERSION}']
 
   # Update the Cloud Run service to use the new image
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    entrypoint: 'gcloud'
-    args:
-      - 'run'
-      - 'services'
-      - 'update'
-      - 'run-vebgil-pc-test'
-      - '--image=${_REGION}-docker.pkg.dev/${PROJECT_ID}/arvebgilpctest/portainer:${_VERSION}'
-      - '--region=${_REGION}'
+  #- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  #  entrypoint: 'gcloud'
+  #  args:
+  #    - 'run'
+  #    - 'services'
+  #    - 'update'
+  #    - 'run-vebgil-pc-test'
+  #    - '--image=${_REGION}-docker.pkg.dev/${PROJECT_ID}/arvebgilpctest/portainer:${_VERSION}'
+  #    - '--region=${_REGION}'
 
-substitutions:
-  _REGION: europe-west1 # Can only use cloud build in some regions
-  _VERSION: latest  # You can override this with a git tag or commit SHA
+#substitutions:
+#  _REGION: europe-west1 # Can only use cloud build in some regions
+#  _VERSION: latest  # You can override this with a git tag or commit SHA
+
+#options:
+#  logging: CLOUD_LOGGING_ONLY
+
+steps:
+# Debug info
+- name: 'gcr.io/cloud-builders/gcloud'
+  id: 'debug'
+  entrypoint: 'bash'
+  args:
+    - '-c'
+    - |
+      echo "Project ID: ${PROJECT_ID}"
+      echo "Build ID: ${BUILD_ID}"
+      echo "Directory contents:"
+      ls -la
+      echo "Docker version:"
+      docker --version
+
+# Check if Artifact Registry exists
+- name: 'gcr.io/cloud-builders/gcloud'
+  id: 'check-registry'
+  entrypoint: 'bash'
+  args:
+    - '-c'
+    - |
+      echo "Checking if Artifact Registry exists..."
+      gcloud artifacts repositories list --location=europe-west1 || echo "Failed to list repositories"
+
+# Build the image
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'build'
+  args: ['build', '-t', 'europe-west1-docker.pkg.dev/${PROJECT_ID}/arvebgilpctest/portainer:test', '.']
 
 options:
-  logging: CLOUD_LOGGING_ONLY
+logging: CLOUD_LOGGING_ONLY
