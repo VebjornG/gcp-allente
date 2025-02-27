@@ -51,15 +51,15 @@ resource "google_project_iam_member" "cloud_run_permissions" {
   member  = "serviceAccount:${google_service_account.cloud_run_sa.email}"
 } */
 
-# Grant permissions to the Cloud Build service account
+# Grant permissions to the Cloud Build service account - with more limited roles
 resource "google_project_iam_member" "cloudbuild_permissions" {
   for_each = toset([
-    "roles/serviceusage.serviceUsageAdmin",
-    "roles/iam.serviceAccountAdmin",
-    "roles/artifactregistry.admin",
-    "roles/run.admin",
-    "roles/cloudbuild.builds.builder",
-    "roles/secretmanager.admin"
+    "roles/serviceusage.serviceUsageViewer",      # View services (need Admin for initial setup only)
+    "roles/iam.serviceAccountCreator",            # Create service accounts without full admin
+    "roles/artifactregistry.writer",              # Push/pull images without admin
+    "roles/run.developer",                        # Deploy to Cloud Run without admin
+    "roles/cloudbuild.builds.builder",            # Build permissions (no change needed)
+    "roles/secretmanager.secretAccessor"          # Access secrets without admin
   ])
   
   project = var.project_id
