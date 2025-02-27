@@ -1,29 +1,16 @@
 steps:
-  # Build the Portainer Docker image
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', '${_REGION}-docker.pkg.dev/${PROJECT_ID}/arvebgilpctest/portainer:latest', '.']
-
-  # Push the Docker image to Artifact Registry
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', '${_REGION}-docker.pkg.dev/${PROJECT_ID}/arvebgilpctest/portainer:latest']
-
-  # Deploy to Cloud Run
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    entrypoint: 'gcloud'
-    args:
-      - 'run'
-      - 'deploy'
-      - 'run-vebgil-pc-test'
-      - '--image=${_REGION}-docker.pkg.dev/${PROJECT_ID}/arvebgilpctest/portainer:latest'
-      - '--region=${_REGION}'
-      - '--platform=managed'
-      - '--service-account=cloud-run-sa@${PROJECT_ID}.iam.gserviceaccount.com'
-      - '--update-secrets=PORTAINER_ADMIN_PASSWORD=portainer-admin-password:latest'
-      - '--update-secrets=/secrets/sa-key/key.json=cloud-run-sa-key:latest'
-
-substitutions:
-  _REGION: europe-west1  # Default region
-  PROJECT_ID: arvebgilpctest  # Default project ID
-
-options:
-  logging: CLOUD_LOGGING_ONLY
+  # Initialize Terraform
+  - name: 'hashicorp/terraform:latest'
+    args: ['init']
+    
+  # Validate Terraform files
+  - name: 'hashicorp/terraform:latest'
+    args: ['validate']
+    
+  # Plan Terraform changes
+  - name: 'hashicorp/terraform:latest'
+    args: ['plan', '-out=tfplan']
+    
+  # Apply Terraform changes (with approval trigger or separate step)
+  - name: 'hashicorp/terraform:latest'
+    args: ['apply', 'tfplan']

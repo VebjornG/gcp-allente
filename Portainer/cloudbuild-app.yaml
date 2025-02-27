@@ -1,0 +1,23 @@
+steps:
+  # Build the Portainer Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', '${_REGION}-docker.pkg.dev/${PROJECT_ID}/arvebgilpctest/portainer:${_VERSION}', '.']
+
+  # Push the Docker image to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', '${_REGION}-docker.pkg.dev/${PROJECT_ID}/arvebgilpctest/portainer:${_VERSION}']
+
+  # Update the Cloud Run service to use the new image
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'gcloud'
+    args:
+      - 'run'
+      - 'services'
+      - 'update'
+      - 'run-vebgil-pc-test'
+      - '--image=${_REGION}-docker.pkg.dev/${PROJECT_ID}/arvebgilpctest/portainer:${_VERSION}'
+      - '--region=${_REGION}'
+
+substitutions:
+  _REGION: europe-west1
+  _VERSION: latest  # You can override this with a git tag or commit SHA
