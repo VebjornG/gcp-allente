@@ -15,36 +15,41 @@ steps:
   # Initialize Terraform with more verbose logging
   - name: 'hashicorp/terraform:latest'
     id: 'tf-init'
-    args: ['init', '-input=false', '-no-color']
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        terraform init -input=false
     
   # Validate Terraform files
   - name: 'hashicorp/terraform:latest'
     id: 'tf-validate'
-    args: ['validate']
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        cd infrastructure
+        terraform validate
     
   # Plan Terraform changes with detailed error output
   - name: 'hashicorp/terraform:latest'
     dir: 'infrastructure'
     id: 'tf-plan'
-    entrypoint: 'sh'
+    entrypoint: 'bash'
     args:
       - '-c'
       - |
-        set -e
+        cd infrastructure
         echo "Running Terraform plan..."
-        terraform plan -input=false -no-color -out=tfplan || {
-          echo "Terraform plan failed with exit code $?"
-          echo "Terraform version:"
-          terraform version
-          echo "Provider information:"
-          terraform providers
-          exit 1
-        }
+        terraform plan -input=false -out=tfplan
     
   # Apply Terraform changes
   - name: 'hashicorp/terraform:latest'
     id: 'tf-apply'
-    args: ['apply', '-input=false', '-no-color', 'tfplan']
+    args:
+      - '-c'
+      - |
+        terraform apply -input=false tfplan
 
 options:
   logging: CLOUD_LOGGING_ONLY
