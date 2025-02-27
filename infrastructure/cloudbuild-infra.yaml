@@ -24,6 +24,7 @@ steps:
     
   # Plan Terraform changes with detailed error output
   - name: 'hashicorp/terraform:latest'
+    dir: 'infrastructure'
     id: 'tf-plan'
     entrypoint: 'sh'
     args:
