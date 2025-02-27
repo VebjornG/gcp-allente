@@ -40,7 +40,7 @@ resource "google_project_iam_member" "terraform_sa_roles" {
 }
 
 
-# Grant Cloud Run permissions
+/* # Grant Cloud Run permissions
 resource "google_project_iam_member" "cloud_run_permissions" {
   for_each = toset([
     "roles/artifactregistry.reader",       # Read from Artifact Registry
@@ -49,6 +49,22 @@ resource "google_project_iam_member" "cloud_run_permissions" {
   project = var.project_id
   role    = each.key
   member  = "serviceAccount:${google_service_account.cloud_run_sa.email}"
+} */
+
+# Grant permissions to the Cloud Build service account
+resource "google_project_iam_member" "cloudbuild_permissions" {
+  for_each = toset([
+    "roles/serviceusage.serviceUsageAdmin",
+    "roles/iam.serviceAccountAdmin",
+    "roles/artifactregistry.admin",
+    "roles/run.admin",
+    "roles/cloudbuild.builds.builder",
+    "roles/secretmanager.admin"
+  ])
+  
+  project = var.project_id
+  role    = each.value
+  member  = "serviceAccount:923078808085@cloudbuild.gserviceaccount.com"
 }
 
 # Create Artifact Registry
