@@ -19,7 +19,7 @@ steps:
       - '--region=${_REGION}'
 
 substitutions:
-  _REGION: europe-west1
+  _REGION: europe-north1
   _VERSION: latest  # You can override this with a git tag or commit SHA
 
 options:
