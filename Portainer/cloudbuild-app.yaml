@@ -25,35 +25,47 @@
 #options:
 #  logging: CLOUD_LOGGING_ONLY
 
-steps:
+#steps:
 # Debug info
-- name: 'gcr.io/cloud-builders/gcloud'
-  id: 'debug'
-  entrypoint: 'bash'
-  args:
-    - '-c'
-    - |
-      echo "Project ID: ${PROJECT_ID}"
-      echo "Build ID: ${BUILD_ID}"
-      echo "Directory contents:"
-      ls -la
-      echo "Docker version:"
-      docker --version
+#- name: 'gcr.io/cloud-builders/gcloud'
+#  id: 'debug'
+#  entrypoint: 'bash'
+#  args:
+#    - '-c'
+#    - |
+#      echo "Project ID: ${PROJECT_ID}"
+#      echo "Build ID: ${BUILD_ID}"
+#      echo "Directory contents:"
+#      ls -la
+#      echo "Docker version:"
+#      docker --version
 
 # Check if Artifact Registry exists
-- name: 'gcr.io/cloud-builders/gcloud'
-  id: 'check-registry'
-  entrypoint: 'bash'
-  args:
-    - '-c'
-    - |
-      echo "Checking if Artifact Registry exists..."
-      gcloud artifacts repositories list --location=europe-west1 || echo "Failed to list repositories"
+#- name: 'gcr.io/cloud-builders/gcloud'
+#  id: 'check-registry'
+#  entrypoint: 'bash'
+#  args:
+#    - '-c'
+#    - |
+#      echo "Checking if Artifact Registry exists..."
+#      gcloud artifacts repositories list --location=europe-west1 || echo "Failed to list repositories"
 
 # Build the image
-- name: 'gcr.io/cloud-builders/docker'
-  id: 'build'
-  args: ['build', '-t', 'europe-west1-docker.pkg.dev/${PROJECT_ID}/arvebgilpctest/portainer:test', '.']
+#- name: 'gcr.io/cloud-builders/docker'
+#  id: 'build'
+#  args: ['build', '-t', 'europe-west1-docker.pkg.dev/${PROJECT_ID}/arvebgilpctest/portainer:test', '.']
+
+#options:
+#  logging: CLOUD_LOGGING_ONLY
+
+steps:
+  # Simple step to check gcloud version
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args: ['version']
+
+  # Then try to build the Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'europe-west1-docker.pkg.dev/${PROJECT_ID}/arvebgilpctest/portainer:latest', '.']
 
 options:
   logging: CLOUD_LOGGING_ONLY
