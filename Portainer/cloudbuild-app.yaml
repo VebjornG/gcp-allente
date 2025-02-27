@@ -19,7 +19,7 @@ steps:
       - '--region=${_REGION}'
 
 substitutions:
-  _REGION: europe-north1
+  _REGION: europe-west1 # Can only use cloud build in some regions
   _VERSION: latest  # You can override this with a git tag or commit SHA
 
 options:

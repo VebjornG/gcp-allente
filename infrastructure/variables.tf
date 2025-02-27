@@ -12,6 +12,6 @@ variable "project_id" {
 
 variable "region" {
   description = "The GCP region"
-  default     = "europe-north1"
+  default     = "europe-west1" # Can only use cloud build in some regions
   type        = string
 }
