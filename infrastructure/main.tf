@@ -45,7 +45,8 @@ resource "google_project_iam_member" "cloudbuild_permissions" {
     "roles/artifactregistry.writer",
     "roles/run.developer",
     "roles/cloudbuild.builds.builder",
-    "roles/secretmanager.secretAccessor"
+    "roles/secretmanager.secretAccessor",
+    "roles/iam.serviceAccountKeyAdmin"    # Added permission to create service account keys
   ])
   
   project = var.project_id
@@ -53,21 +54,29 @@ resource "google_project_iam_member" "cloudbuild_permissions" {
   member  = "serviceAccount:923078808085@cloudbuild.gserviceaccount.com"
 }
 
-# Create Service Account Key
+# Comment out service account key creation since we don't have permissions
+# and the secret likely already has a key
+/*
 resource "google_service_account_key" "cloud_run_sa_key" {
   service_account_id = local.cloud_run_sa_name
 }
 
-# Store Service Account Key in Secret Manager
 resource "google_secret_manager_secret_version" "cloud_run_sa_key_version" {
   secret      = local.secret_full_id
   secret_data = base64decode(google_service_account_key.cloud_run_sa_key.private_key)
 }
+*/
 
-# Cloud Run Deployment for Portainer
-resource "google_cloud_run_service" "portainer" {
-  depends_on = [google_project_service.cloudrun]
+# Use data source to reference existing Cloud Run service
+data "google_cloud_run_service" "portainer" {
   name     = "run-vebgil-pc-test"
+  location = var.region
+}
+
+# Use new resource with different name if you want to make changes
+resource "google_cloud_run_service" "portainer_update" {
+  count    = 0  # Set to 1 if you want to create a new version
+  name     = "run-vebgil-pc-test-new"
   location = var.region
   
   template {
@@ -80,7 +89,6 @@ resource "google_cloud_run_service" "portainer" {
           container_port = 9000
         }
         
-        # Mount service account key from Secret Manager
         env {
           name  = "GOOGLE_APPLICATION_CREDENTIALS"
           value = "/secrets/sa-key/key.json"
@@ -108,15 +116,15 @@ resource "google_cloud_run_service" "portainer" {
 
 # Make the Portainer service publicly accessible
 resource "google_cloud_run_service_iam_member" "public_access" {
-  location = google_cloud_run_service.portainer.location
-  service  = google_cloud_run_service.portainer.name
+  location = data.google_cloud_run_service.portainer.location
+  service  = data.google_cloud_run_service.portainer.name
   role     = "roles/run.invoker"
   member   = "allUsers"
 }
 
 # Output the URL of the deployed service
 output "portainer_url" {
-  value = google_cloud_run_service.portainer.status[0].url
+  value = data.google_cloud_run_service.portainer.status[0].url
 }
 
 /* # Enable required APIs
