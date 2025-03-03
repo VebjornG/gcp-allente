@@ -14,23 +14,27 @@ resource "google_project_service" "artifactregistry" {
   disable_dependent_services = false
 }
 
+
+## COMMENTED OUT BECAUSE OF ERRORS IN CLOUD BUILD - ALREADY EXISTS IN THE PROJECT ##
 # Create Terraform Service Account with more minimal permissions
-resource "google_service_account" "terraform_sa" {
+/* resource "google_service_account" "terraform_sa" {
   account_id   = "terraform-sa"
   display_name = "Terraform Service Account"
   lifecycle {
     ignore_changes = [account_id] # Don't recreate the service account if the ID changes
   }
-}
+} */
 
+
+## COMMENTED OUT BECAUSE OF ERRORS IN CLOUD BUILD - ALREADY EXISTS IN THE PROJECT ##
 # Create Cloud Run Service Account
-resource "google_service_account" "cloud_run_sa" {
+/* resource "google_service_account" "cloud_run_sa" {
   account_id   = "cloud-run-sa"
   display_name = "Cloud Run Service Account"
   lifecycle {
     ignore_changes = [account_id] # Don't recreate the service account if the ID changes
   }
-}
+} */
 
 # Assign more limited roles to the Terraform service account
 # a service account is like a user account, but for services
@@ -81,8 +85,9 @@ resource "google_project_iam_member" "cloudbuild_permissions" {
   member  = "serviceAccount:923078808085@cloudbuild.gserviceaccount.com"
 }
 
+## COMMENTED OUT BECAUSE OF ERRORS IN CLOUD BUILD - ALREADY EXISTS IN THE PROJECT ##
 # Create Artifact Registry
-resource "google_artifact_registry_repository" "portainer_repo" {
+/* resource "google_artifact_registry_repository" "portainer_repo" {
   depends_on = [google_project_service.artifactregistry]
   repository_id = "arvebgilpctest"
   location = var.region
@@ -90,10 +95,11 @@ resource "google_artifact_registry_repository" "portainer_repo" {
   lifecycle {
     ignore_changes = [repository_id] # Don't recreate the repository if the ID changes
   }
-}
+} */
 
+## COMMENTED OUT BECAUSE OF ERRORS IN CLOUD BUILD - ALREADY EXISTS IN THE PROJECT ##
 # Create Secret for Service Account Key
-resource "google_secret_manager_secret" "cloud_run_sa_key" {
+/* resource "google_secret_manager_secret" "cloud_run_sa_key" {
   depends_on  = [google_project_service.secretmanager] # Ensure the Secret Manager API is enabled before creating the secret
   secret_id   = "cloud-run-sa-key"
   replication {
@@ -102,7 +108,7 @@ resource "google_secret_manager_secret" "cloud_run_sa_key" {
   lifecycle {
     ignore_changes = [secret_id] # Don't recreate the secret if the ID changes
   }
-}
+} */
 
 # Create Service Account Key
 resource "google_service_account_key" "cloud_run_sa_key" {
