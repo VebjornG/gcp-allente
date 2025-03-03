@@ -96,6 +96,9 @@ resource "google_artifact_registry_repository" "portainer_repo" {
 resource "google_secret_manager_secret" "cloud_run_sa_key" {
   depends_on  = [google_project_service.secretmanager] # Ensure the Secret Manager API is enabled before creating the secret
   secret_id   = "cloud-run-sa-key"
+  replication {
+    auto = true  # Updated from 'automatic' to 'auto'
+  }
   lifecycle {
     ignore_changes = [secret_id] # Don't recreate the secret if the ID changes
   }
