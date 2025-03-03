@@ -18,9 +18,6 @@ resource "google_project_service" "artifactregistry" {
 resource "google_service_account" "terraform_sa" {
   account_id   = "terraform-sa"
   display_name = "Terraform Service Account"
-  replication {
-    auto = true  # Use 'auto' instead of 'automatic'
-  }
   lifecycle {
     ignore_changes = [account_id]
   }
@@ -30,9 +27,6 @@ resource "google_service_account" "terraform_sa" {
 resource "google_service_account" "cloud_run_sa" {
   account_id   = "cloud-run-sa"
   display_name = "Cloud Run Service Account"
-  replication {
-    auto = true  # Use 'auto' instead of 'automatic'. 
-  }
   lifecycle {
     ignore_changes = [account_id]
   }
@@ -93,9 +87,6 @@ resource "google_artifact_registry_repository" "portainer_repo" {
   repository_id = "arvebgilpctest"
   location = var.region
   format   = "DOCKER"
-  replication {
-    auto = true  # Use 'auto' instead of 'automatic'
-  }
   lifecycle {
     ignore_changes = [account_id]
   }
@@ -105,9 +96,6 @@ resource "google_artifact_registry_repository" "portainer_repo" {
 resource "google_secret_manager_secret" "cloud_run_sa_key" {
   depends_on  = [google_project_service.secretmanager] # Ensure the Secret Manager API is enabled before creating the secret
   secret_id   = "cloud-run-sa-key"
-  replication {
-    auto = true
-  }
   lifecycle {
     ignore_changes = [account_id]
   }
