@@ -19,7 +19,7 @@ resource "google_service_account" "terraform_sa" {
   account_id   = "terraform-sa"
   display_name = "Terraform Service Account"
   lifecycle {
-    ignore_changes = [account_id]
+    ignore_changes = [account_id] # Don't recreate the service account if the ID changes
   }
 }
 
@@ -28,7 +28,7 @@ resource "google_service_account" "cloud_run_sa" {
   account_id   = "cloud-run-sa"
   display_name = "Cloud Run Service Account"
   lifecycle {
-    ignore_changes = [account_id]
+    ignore_changes = [account_id] # Don't recreate the service account if the ID changes
   }
 }
 
@@ -88,7 +88,7 @@ resource "google_artifact_registry_repository" "portainer_repo" {
   location = var.region
   format   = "DOCKER"
   lifecycle {
-    ignore_changes = [account_id]
+    ignore_changes = [repository_id] # Don't recreate the repository if the ID changes
   }
 }
 
@@ -97,7 +97,7 @@ resource "google_secret_manager_secret" "cloud_run_sa_key" {
   depends_on  = [google_project_service.secretmanager] # Ensure the Secret Manager API is enabled before creating the secret
   secret_id   = "cloud-run-sa-key"
   lifecycle {
-    ignore_changes = [account_id]
+    ignore_changes = [secret_id] # Don't recreate the secret if the ID changes
   }
 }
 
