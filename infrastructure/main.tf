@@ -1,3 +1,13 @@
+# Define local variables for existing resources
+locals {
+  terraform_sa_email = "terraform-sa@allente-training.iam.gserviceaccount.com"
+  cloud_run_sa_email = "cloud-run-sa@allente-training.iam.gserviceaccount.com"
+  cloud_run_sa_name  = "projects/allente-training/serviceAccounts/cloud-run-sa@allente-training.iam.gserviceaccount.com"
+  secret_id          = "cloud-run-sa-key"
+  secret_full_id     = "projects/923078808085/secrets/cloud-run-sa-key"
+  repository_name    = "arvebgilpctest"
+}
+
 # Enable required APIs
 resource "google_project_service" "secretmanager" {
   service = "secretmanager.googleapis.com"
@@ -13,6 +23,117 @@ resource "google_project_service" "artifactregistry" {
   service = "artifactregistry.googleapis.com"
   disable_dependent_services = false
 }
+
+# Assign roles to the Terraform service account
+resource "google_project_iam_member" "terraform_sa_roles" {
+  for_each = toset([
+    "roles/artifactregistry.admin",       # Manage Artifact Registry
+    "roles/run.admin",                    # Full control over Cloud Run
+    "roles/iam.serviceAccountUser",       # Allows Terraform to use the service account
+    "roles/secretmanager.admin"           # Manage Secret Manager
+  ])
+  project = var.project_id
+  role    = each.value
+  member  = "serviceAccount:${local.terraform_sa_email}"
+}
+
+# Grant permissions to the Cloud Build service account
+resource "google_project_iam_member" "cloudbuild_permissions" {
+  for_each = toset([
+    "roles/serviceusage.serviceUsageViewer",
+    "roles/iam.serviceAccountCreator",
+    "roles/artifactregistry.writer",
+    "roles/run.developer",
+    "roles/cloudbuild.builds.builder",
+    "roles/secretmanager.secretAccessor"
+  ])
+  
+  project = var.project_id
+  role    = each.value
+  member  = "serviceAccount:923078808085@cloudbuild.gserviceaccount.com"
+}
+
+# Create Service Account Key
+resource "google_service_account_key" "cloud_run_sa_key" {
+  service_account_id = local.cloud_run_sa_name
+}
+
+# Store Service Account Key in Secret Manager
+resource "google_secret_manager_secret_version" "cloud_run_sa_key_version" {
+  secret      = local.secret_full_id
+  secret_data = base64decode(google_service_account_key.cloud_run_sa_key.private_key)
+}
+
+# Cloud Run Deployment for Portainer
+resource "google_cloud_run_service" "portainer" {
+  depends_on = [google_project_service.cloudrun]
+  name     = "run-vebgil-pc-test"
+  location = var.region
+  
+  template {
+    spec {
+      service_account_name = local.cloud_run_sa_email
+      containers {
+        image = "${var.region}-docker.pkg.dev/${var.project_id}/${local.repository_name}/portainer:latest"
+        
+        ports {
+          container_port = 9000
+        }
+        
+        # Mount service account key from Secret Manager
+        env {
+          name  = "GOOGLE_APPLICATION_CREDENTIALS"
+          value = "/secrets/sa-key/key.json"
+        }
+        
+        volume_mounts {
+          name = "sa-key-volume"
+          mount_path = "/secrets/sa-key"
+        }
+      }
+      
+      volumes {
+        name = "sa-key-volume"
+        secret {
+          secret_name = local.secret_id
+          items {
+            key = "latest"
+            path = "key.json"
+          }
+        }
+      }
+    }
+  }
+}
+
+# Make the Portainer service publicly accessible
+resource "google_cloud_run_service_iam_member" "public_access" {
+  location = google_cloud_run_service.portainer.location
+  service  = google_cloud_run_service.portainer.name
+  role     = "roles/run.invoker"
+  member   = "allUsers"
+}
+
+# Output the URL of the deployed service
+output "portainer_url" {
+  value = google_cloud_run_service.portainer.status[0].url
+}
+
+/* # Enable required APIs
+resource "google_project_service" "secretmanager" {
+  service = "secretmanager.googleapis.com"
+  disable_dependent_services = false
+}
+
+resource "google_project_service" "cloudrun" {
+  service = "run.googleapis.com"
+  disable_dependent_services = false
+}
+
+resource "google_project_service" "artifactregistry" {
+  service = "artifactregistry.googleapis.com"
+  disable_dependent_services = false
+} */
 
 
 ## COMMENTED OUT BECAUSE OF ERRORS IN CLOUD BUILD - ALREADY EXISTS IN THE PROJECT ##
@@ -45,7 +166,7 @@ resource "google_project_service" "artifactregistry" {
 # The difference between a managed identity and a service principal is that a managed identity is a service principal that is managed by Azure
 # The difference between azure and gcp on this topic is that in azure, a managed identity is a service principal that is managed by azure
 # In gcp, a service account is a service principal that is managed by gcp
-resource "google_project_iam_member" "terraform_sa_roles" {
+/* resource "google_project_iam_member" "terraform_sa_roles" {
   for_each = toset([
     "roles/artifactregistry.admin",       # Manage Artifact Registry
     "roles/run.admin",                    # Full control over Cloud Run
@@ -55,7 +176,7 @@ resource "google_project_iam_member" "terraform_sa_roles" {
   project = var.project_id
   role    = each.value
   member  = "serviceAccount:${google_service_account.terraform_sa.email}"
-}
+} */
 
 
 /* # Grant Cloud Run permissions
@@ -69,7 +190,7 @@ resource "google_project_iam_member" "cloud_run_permissions" {
   member  = "serviceAccount:${google_service_account.cloud_run_sa.email}"
 } */
 
-# Grant permissions to the Cloud Build service account - with more limited roles
+/* # Grant permissions to the Cloud Build service account - with more limited roles
 resource "google_project_iam_member" "cloudbuild_permissions" {
   for_each = toset([
     "roles/serviceusage.serviceUsageViewer",      # View services (need Admin for initial setup only)
@@ -83,7 +204,7 @@ resource "google_project_iam_member" "cloudbuild_permissions" {
   project = var.project_id
   role    = each.value
   member  = "serviceAccount:923078808085@cloudbuild.gserviceaccount.com"
-}
+} */
 
 ## COMMENTED OUT BECAUSE OF ERRORS IN CLOUD BUILD - ALREADY EXISTS IN THE PROJECT ##
 # Create Artifact Registry
@@ -110,7 +231,7 @@ resource "google_project_iam_member" "cloudbuild_permissions" {
   }
 } */
 
-# Create Service Account Key
+/* # Create Service Account Key
 resource "google_service_account_key" "cloud_run_sa_key" {
   service_account_id = google_service_account.cloud_run_sa.name
 }
@@ -161,10 +282,10 @@ resource "google_cloud_run_service" "portainer" {
       }
     }
   }
-}
+} */
 
 
-# Make the Portainer service publicly accessible
+/* # Make the Portainer service publicly accessible
 resource "google_cloud_run_service_iam_member" "public_access" {
   location = google_cloud_run_service.portainer.location
   service  = google_cloud_run_service.portainer.name
@@ -175,7 +296,7 @@ resource "google_cloud_run_service_iam_member" "public_access" {
 # Output the URL of the deployed service
 output "portainer_url" {
   value = google_cloud_run_service.portainer.status[0].url
-}
+} */
 
 /* # Create Service Account which is used to deploy resources.
 # The way it does this is by using the credentials of the service account to authenticate with GCP.
