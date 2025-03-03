@@ -18,15 +18,35 @@ resource "google_project_service" "artifactregistry" {
 resource "google_service_account" "terraform_sa" {
   account_id   = "terraform-sa"
   display_name = "Terraform Service Account"
+  replication {
+    auto = true  # Use 'auto' instead of 'automatic'
+  }
+  lifecycle {
+    ignore_changes = [account_id]
+  }
 }
 
 # Create Cloud Run Service Account
 resource "google_service_account" "cloud_run_sa" {
   account_id   = "cloud-run-sa"
   display_name = "Cloud Run Service Account"
+  replication {
+    auto = true  # Use 'auto' instead of 'automatic'. 
+  }
+  lifecycle {
+    ignore_changes = [account_id]
+  }
 }
 
 # Assign more limited roles to the Terraform service account
+# a service account is like a user account, but for services
+# it can be used to authenticate with GCP services
+# the equivalent in azure is a managed identity
+# a managed identity is a service principal
+# a service principal is a user account
+# The difference between a managed identity and a service principal is that a managed identity is a service principal that is managed by Azure
+# The difference between azure and gcp on this topic is that in azure, a managed identity is a service principal that is managed by azure
+# In gcp, a service account is a service principal that is managed by gcp
 resource "google_project_iam_member" "terraform_sa_roles" {
   for_each = toset([
     "roles/artifactregistry.admin",       # Manage Artifact Registry
@@ -73,14 +93,23 @@ resource "google_artifact_registry_repository" "portainer_repo" {
   repository_id = "arvebgilpctest"
   location = var.region
   format   = "DOCKER"
+  replication {
+    auto = true  # Use 'auto' instead of 'automatic'
+  }
+  lifecycle {
+    ignore_changes = [account_id]
+  }
 }
 
 # Create Secret for Service Account Key
 resource "google_secret_manager_secret" "cloud_run_sa_key" {
-  depends_on  = [google_project_service.secretmanager]
+  depends_on  = [google_project_service.secretmanager] # Ensure the Secret Manager API is enabled before creating the secret
   secret_id   = "cloud-run-sa-key"
   replication {
-    automatic = true
+    auto = true
+  }
+  lifecycle {
+    ignore_changes = [account_id]
   }
 }
 
